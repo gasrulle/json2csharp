@@ -7,6 +7,8 @@ A simple and fast VS Code extension to paste JSON from your clipboard as C# clas
 
 Perfect for quickly converting JSON from REST API documentation into C# request/response objects.
 
+<img src="https://raw.githubusercontent.com/gasrulle/json2csharp/main/docs/images/context-menu.png" alt="json2csharp - Context menu" width="457">
+
 ## Features
 
 - **Context Menu Integration**: Right-click in any `.cs` file to see "Paste JSON as C#"
