@@ -2,7 +2,7 @@
     "name": "json2csharp",
     "displayName": "json2csharp",
     "description": "Paste JSON as C# classes or records",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "publisher": "Gasrulle",
     "license": "MIT",
     "repository": {
@@ -136,6 +136,19 @@
                     ],
                     "default": "SystemTextJson",
                     "description": "Add serialization attributes to properties when the JSON key differs from the C# property name"
+                },
+                "json2csharp.attributeRendering": {
+                    "type": "string",
+                    "enum": [
+                        "whenDifferent",
+                        "always"
+                    ],
+                    "enumDescriptions": [
+                        "Only add attributes when the JSON key differs from the C# property name",
+                        "Always add attributes on every property, even when names match"
+                    ],
+                    "default": "whenDifferent",
+                    "description": "Controls when serialization attributes are rendered on properties. Only applies when 'Serialization Attributes' is set to SystemTextJson or NewtonsoftJson."
                 }
             }
         }

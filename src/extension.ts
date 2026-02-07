@@ -67,13 +67,16 @@ export function activate(context: vscode.ExtensionContext) {
             serializationSetting === 'SystemTextJson' ? 'SystemTextJson' :
                 serializationSetting === 'NewtonsoftJson' ? 'NewtonsoftJson' : undefined;
 
+        // Get attribute rendering mode
+        const alwaysRenderAttributes = config.get<string>('attributeRendering', 'whenDifferent') === 'always';
+
         // Calculate namespace if enabled
         const includeNamespace = config.get<boolean>('includeNamespace', false);
         const namespace = includeNamespace ? calculateNamespace(editor.document.uri.fsPath) : undefined;
 
         try {
             // Convert JSON to C#
-            const csharpCode = await convertJsonToCSharp(clipboardText, rootClassName, config, nullableStyle, namespace, serializationAttributes);
+            const csharpCode = await convertJsonToCSharp(clipboardText, rootClassName, config, nullableStyle, namespace, serializationAttributes, alwaysRenderAttributes);
 
             // Insert at cursor position
             await editor.edit((editBuilder) => {
