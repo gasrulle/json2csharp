@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { convertJsonToCSharp, NullableStyle } from './converter';
+import { convertJsonToCSharp, NullableStyle, SerializationAttributes } from './converter';
 import { calculateNamespace } from './namespace';
 import { validateJson } from './validator';
 
@@ -61,13 +61,19 @@ export function activate(context: vscode.ExtensionContext) {
             nullableSetting === 'nullable' ? 'nullable' :
                 nullableSetting === 'defaultValues' ? 'defaults' : undefined;
 
+        // Get serialization attributes setting
+        const serializationSetting = config.get<string>('serializationAttributes', 'SystemTextJson');
+        const serializationAttributes: SerializationAttributes | undefined =
+            serializationSetting === 'SystemTextJson' ? 'SystemTextJson' :
+                serializationSetting === 'NewtonsoftJson' ? 'NewtonsoftJson' : undefined;
+
         // Calculate namespace if enabled
         const includeNamespace = config.get<boolean>('includeNamespace', false);
         const namespace = includeNamespace ? calculateNamespace(editor.document.uri.fsPath) : undefined;
 
         try {
             // Convert JSON to C#
-            const csharpCode = await convertJsonToCSharp(clipboardText, rootClassName, config, nullableStyle, namespace);
+            const csharpCode = await convertJsonToCSharp(clipboardText, rootClassName, config, nullableStyle, namespace, serializationAttributes);
 
             // Insert at cursor position
             await editor.edit((editBuilder) => {

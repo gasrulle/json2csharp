@@ -18,6 +18,7 @@ Perfect for quickly converting JSON from REST API documentation into C# request/
 - **Collection Types**: Choose between Array, List, IList, IEnumerable, or IReadOnlyList
 - **Nullable Support**: Handle nullable reference types with annotations or default values
 - **Namespace Detection**: Optionally include file-scoped namespace from .csproj structure
+- **Serialization Attributes**: Optionally add `[JsonPropertyName]` (System.Text.Json) or `[JsonProperty]` (Newtonsoft.Json) when JSON keys differ from C# names
 
 ## Usage
 
@@ -72,7 +73,8 @@ public class Address
 | `json2csharp.nullableReferenceTypes` | `"none"` | Nullable handling: none, nullable (?), or defaultValues |
 | `json2csharp.inferEnums` | `false` | Attempt to infer enum types from JSON values |
 | `json2csharp.inferDateTimes` | `true` | Attempt to infer DateTime types from strings |
-| `json2csharp.includeNamespace` | `false` | Include file-scoped namespace from .csproj structure |
+| `json2csharp.includeNamespace` | `false` | Include file-scoped namespace from .csproj structure. Also adds required using statements when serialization attributes are enabled |
+| `json2csharp.serializationAttributes` | `"SystemTextJson"` | Serialization attributes: none, SystemTextJson, or NewtonsoftJson |
 
 ## Requirements
 

@@ -58,7 +58,7 @@
         {
             "label": "Package json2csharp VSIX",
             "type": "shell",
-            "command": "npx @vscode/vsce package",
+            "command": "npm install; npx @vscode/vsce package",
             "group": "build",
             "presentation": {
                 "reveal": "always",

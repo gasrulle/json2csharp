@@ -11,7 +11,11 @@ import type {
 import type {
     cSharpOptions as CSharpOptionsType,
     CSharpRenderer as CSharpRendererType,
-    CSharpTargetLanguage as CSharpTargetLanguageType
+    CSharpTargetLanguage as CSharpTargetLanguageType,
+    newtonsoftCSharpOptions as NewtonsoftCSharpOptionsType,
+    NewtonsoftCSharpRenderer as NewtonsoftCSharpRendererType,
+    systemTextJsonCSharpOptions as SystemTextJsonCSharpOptionsType,
+    SystemTextJsonCSharpRenderer as SystemTextJsonCSharpRendererType
 } from 'quicktype-core/dist/language/CSharp';
 
 // Lazy-loaded quicktype-core module cache
@@ -26,6 +30,10 @@ let csharpLang: {
     cSharpOptions: typeof CSharpOptionsType;
     CSharpRenderer: typeof CSharpRendererType;
     CSharpTargetLanguage: typeof CSharpTargetLanguageType;
+    newtonsoftCSharpOptions: typeof NewtonsoftCSharpOptionsType;
+    NewtonsoftCSharpRenderer: typeof NewtonsoftCSharpRendererType;
+    systemTextJsonCSharpOptions: typeof SystemTextJsonCSharpOptionsType;
+    SystemTextJsonCSharpRenderer: typeof SystemTextJsonCSharpRendererType;
 } | null = null;
 
 /**
@@ -44,18 +52,33 @@ function loadQuicktypeModules() {
 }
 
 /**
- * Create custom C# target language that omits namespace/usings
+ * Create custom C# target language that omits namespace/usings.
+ * When a serialization framework is specified, extends the framework-specific renderer
+ * to get proper attribute support (e.g., [JsonPropertyName], [JsonProperty]).
  */
-function createCustomCSharpLanguage() {
+function createCustomCSharpLanguage(framework?: SerializationAttributes) {
     const { quicktypeCore, csharpLang } = loadQuicktypeModules();
     const { getOptionValues } = quicktypeCore;
-    const { CSharpRenderer, CSharpTargetLanguage, cSharpOptions } = csharpLang;
+    const {
+        CSharpRenderer, CSharpTargetLanguage, cSharpOptions,
+        SystemTextJsonCSharpRenderer, systemTextJsonCSharpOptions,
+        NewtonsoftCSharpRenderer, newtonsoftCSharpOptions
+    } = csharpLang;
+
+    // Pick the correct base renderer and options based on the framework
+    const BaseRenderer = framework === 'SystemTextJson' ? SystemTextJsonCSharpRenderer
+        : framework === 'NewtonsoftJson' ? NewtonsoftCSharpRenderer
+            : CSharpRenderer;
+    const optionsDef = framework === 'SystemTextJson' ? systemTextJsonCSharpOptions
+        : framework === 'NewtonsoftJson' ? newtonsoftCSharpOptions
+            : cSharpOptions;
 
     /**
      * Custom C# renderer that:
      * - Omits namespace and using statements for clean paste
+     * - Inherits attribute support from the framework-specific renderer when applicable
      */
-    class CustomCSharpRenderer extends CSharpRenderer {
+    class CustomCSharpRenderer extends BaseRenderer {
         protected needNamespace(): boolean {
             return false;
         }
@@ -76,7 +99,7 @@ function createCustomCSharpLanguage() {
             return new CustomCSharpRenderer(
                 this,
                 renderContext,
-                getOptionValues(cSharpOptions, untypedOptionValues)
+                getOptionValues(optionsDef, untypedOptionValues)
             );
         }
     }
@@ -98,6 +121,11 @@ export type TypeStyle = 'class' | 'recordPositional' | 'recordProperties';
  * How to handle nullable reference types
  */
 export type NullableStyle = 'nullable' | 'defaults';
+
+/**
+ * Serialization framework for property attributes
+ */
+export type SerializationAttributes = 'SystemTextJson' | 'NewtonsoftJson';
 
 /**
  * Configuration options for the converter
@@ -129,7 +157,8 @@ export async function convertJsonToCSharp(
     rootClassName: string,
     config: vscode.WorkspaceConfiguration,
     nullableStyle?: NullableStyle,
-    namespace?: string
+    namespace?: string,
+    serializationAttributes?: SerializationAttributes
 ): Promise<string> {
     const options = getConverterOptions(config);
 
@@ -148,21 +177,30 @@ export async function convertJsonToCSharp(
     inputData.addInput(jsonInput);
 
     // Use custom C# language that omits namespace/usings
-    const lang = createCustomCSharpLanguage();
+    const lang = createCustomCSharpLanguage(serializationAttributes);
+
+    // Build renderer options based on serialization attributes setting
+    const rendererOptions: Record<string, string> = {
+        'namespace': '',
+        'csharp-version': '6',
+        'any-type': 'object',
+        'number-type': 'double',
+        'array-type': options.collectionType === 'Array' ? 'array' : 'list',
+    };
+
+    if (serializationAttributes) {
+        rendererOptions['features'] = 'attributes-only';
+        rendererOptions['framework'] = serializationAttributes === 'SystemTextJson' ? 'SystemTextJson' : 'NewtonSoft';
+    } else {
+        rendererOptions['just-types'] = 'true';
+        rendererOptions['features'] = 'just-types';
+    }
 
     // Run quicktype
     const result = await quicktype({
         inputData,
         lang,
-        rendererOptions: {
-            'just-types': 'true',
-            'namespace': '',
-            'csharp-version': '6',
-            'any-type': 'object',
-            'number-type': 'double',
-            'features': 'just-types',
-            'array-type': options.collectionType === 'Array' ? 'array' : 'list',
-        },
+        rendererOptions,
         inferEnums: options.inferEnums,
         inferDateTimes: options.inferDateTimes,
         inferMaps: true,
@@ -172,6 +210,11 @@ export async function convertJsonToCSharp(
     });
 
     let output = result.lines.join('\n');
+
+    // Post-process: Remove redundant serialization attributes where JSON key matches C# name
+    if (serializationAttributes) {
+        output = removeRedundantAttributes(output);
+    }
 
     // Post-process: Convert to the selected collection type
     if (options.collectionType !== 'Array') {
@@ -198,6 +241,14 @@ export async function convertJsonToCSharp(
     // Post-process: Prepend file-scoped namespace if provided
     if (namespace) {
         output = `namespace ${namespace};\n\n${output}`;
+    }
+
+    // Post-process: Prepend using statement if serialization attributes are present and namespace is included
+    if (serializationAttributes && namespace) {
+        const usingStatement = serializationAttributes === 'SystemTextJson'
+            ? 'using System.Text.Json.Serialization;'
+            : 'using Newtonsoft.Json;';
+        output = `${usingStatement}\n\n${output}`;
     }
 
     return output.trim();
@@ -301,32 +352,62 @@ function addDefaultValues(code: string): string {
 }
 
 /**
+ * Remove serialization attributes where the JSON key matches the C# property name (case-insensitive).
+ * E.g., removes [JsonPropertyName("year")] above a property named Year,
+ * but keeps [JsonPropertyName("my_title")] above MyTitle.
+ */
+function removeRedundantAttributes(code: string): string {
+    // Match attribute line followed by property line, where attribute value equals property name
+    // Use [ \t]* instead of \s* to avoid consuming blank lines above the attribute
+    const redundantAttrRegex = /^[ \t]*\[(?:JsonPropertyName|JsonProperty)\("(\w+)"\)\]\n([ \t]*public\s+\S+\s+(\w+)\s*\{)/gm;
+
+    return code.replace(redundantAttrRegex, (_match, jsonKey, propertyLine, propName) => {
+        if (jsonKey.toLowerCase() === propName.toLowerCase()) {
+            // JSON key matches C# name (ignoring case) — remove the attribute line
+            return propertyLine;
+        }
+        // Names differ — keep the attribute
+        return _match;
+    });
+}
+
+/**
  * Convert C# classes to positional records
  * Transforms: public class Foo { public string Bar { get; set; } }
  * To: public record Foo(string Bar);
+ * Preserves serialization attributes with [property:] target.
  */
 function convertToPositionalRecords(code: string): string {
     // Match class declarations and their properties
     // Use [\s\S] instead of [^}] to match across braces inside the class body
     const classRegex = /public\s+class\s+(\w+)\s*\{([\s\S]*?)\n\}/g;
 
-    return code.replace(classRegex, (match, className, body) => {
-        // Extract properties - handle both with and without default values
-        // Matches: public string Title { get; set; }
-        // Matches: public string Title { get; set; } = string.Empty;
-        const propertyRegex = /public\s+(\S+)\s+(\w+)\s*\{\s*get;\s*set;\s*\}(?:\s*=\s*[^;]+)?/g;
-        const properties: string[] = [];
+    return code.replace(classRegex, (match, className, body: string) => {
+        // Extract properties with optional preceding attribute lines
+        // Captures: optional [JsonPropertyName("...")] or [JsonProperty("...")], then property declaration
+        const propertyRegex = /(?:\[(?:JsonPropertyName|JsonProperty)\("[^"]*"\)\]\s*\n\s*)?public\s+(\S+)\s+(\w+)\s*\{\s*get;\s*set;\s*\}(?:\s*=\s*[^;]+)?/g;
+        const parameters: string[] = [];
         let propMatch;
 
         while ((propMatch = propertyRegex.exec(body)) !== null) {
+            const fullMatch = propMatch[0];
             const [, type, name] = propMatch;
-            properties.push(`${type} ${name}`);
+
+            // Check if there's an attribute on this property
+            const attrMatch = fullMatch.match(/\[(JsonPropertyName|JsonProperty)\("([^"]*)"\)\]/);
+            if (attrMatch) {
+                const attrName = attrMatch[1];
+                const jsonKey = attrMatch[2];
+                parameters.push(`[property: ${attrName}("${jsonKey}")] ${type} ${name}`);
+            } else {
+                parameters.push(`${type} ${name}`);
+            }
         }
 
-        if (properties.length === 0) {
+        if (parameters.length === 0) {
             return match; // Keep as class if no properties found
         }
 
-        return `public record ${className}(${properties.join(', ')});`;
+        return `public record ${className}(${parameters.join(', ')});`;
     });
 }

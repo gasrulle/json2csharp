@@ -46,6 +46,7 @@ json2csharp/
 - [x] Enum and DateTime inference options
 - [x] Clean output (no using statements, no partial keyword - just class definitions)
 - [x] Optional file-scoped namespace from .csproj and folder structure
+- [x] Serialization attributes (System.Text.Json or Newtonsoft.Json) when JSON keys differ from C# names
 
 ### Configuration Options
 | Setting | Type | Default | Description |
@@ -58,6 +59,7 @@ json2csharp/
 | `json2csharp.inferEnums` | boolean | false | Infer enum types from values |
 | `json2csharp.inferDateTimes` | boolean | true | Infer DateTime types from strings |
 | `json2csharp.includeNamespace` | boolean | false | Include file-scoped namespace from .csproj and folder structure |
+| `json2csharp.serializationAttributes` | enum | "SystemTextJson" | Serialization attributes: none, SystemTextJson ([JsonPropertyName]), NewtonsoftJson ([JsonProperty]) |
 
 ## Key Implementation Details
 
@@ -74,11 +76,13 @@ The quicktype-core library (~1.6 MB) is lazy-loaded on first command invocation:
 - Extension activation is instant, heavy code loads only when needed
 
 ### Post-Processing Steps
-1. Convert collection types (`List<T>` → user's chosen type)
-2. Remove `partial` keyword from class declarations
-3. Add nullable annotations or default values (if configured)
-4. Convert classes to records (if configured)
-5. Prepend file-scoped namespace (if enabled and valid)
+1. Remove redundant serialization attributes (where JSON key matches C# name)
+2. Convert collection types (`List<T>` → user's chosen type)
+3. Remove `partial` keyword from class declarations
+4. Add nullable annotations or default values (if configured)
+5. Convert classes to records (if configured)
+6. Prepend using statement for serialization framework (if attributes + namespace enabled)
+7. Prepend file-scoped namespace (if enabled and valid)
 
 ### Collection Type Conversion
 - quicktype generates `T[]` (array-type: 'array') or `List<T>` (array-type: 'list')
@@ -92,6 +96,14 @@ Two strategies for `<Nullable>enable</Nullable>` compatibility:
 ### Value Types Set
 The converter maintains a set of C# value types that don't need nullable handling:
 `bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, decimal, char, DateTime, DateTimeOffset, TimeSpan, Guid`
+
+### Serialization Attributes
+When `serializationAttributes` is set to `SystemTextJson` or `NewtonsoftJson`:
+- The custom language creates a renderer extending `SystemTextJsonCSharpRenderer` or `NewtonsoftCSharpRenderer` (not the base `CSharpRenderer`) to get proper attribute support
+- quicktype is invoked with `features: 'attributes-only'` and the corresponding `framework` option (`SystemTextJson` or `NewtonSoft`)
+- A post-processing step removes attributes where the JSON key matches the C# property name (case-insensitive comparison)
+- For positional records, attributes use `[property:]` target syntax: `[property: JsonPropertyName("key")]`
+- `using` statements are only prepended when `includeNamespace` is also enabled
 
 ### Namespace Detection (matches VS Code C# extension behavior)
 When `includeNamespace` is enabled, the extension:
@@ -147,7 +159,14 @@ npx @vscode/vsce package    # Creates .vsix file
 
 ## Changelog
 
-### v1.0.0 (Current)
+### v1.1.0 (Current)
+- Serialization attributes support (System.Text.Json / Newtonsoft.Json)
+  - `[JsonPropertyName]` or `[JsonProperty]` on properties where JSON key differs from C# name
+  - Positional records use `[property:]` attribute target
+  - `using` statements only emitted when `includeNamespace` is enabled
+  - Default: SystemTextJson enabled
+
+### v1.0.0
 - Lazy-loaded quicktype-core for faster extension activation
 - Extension icon added (resources/icon.png)
 - Publisher set to Gasrulle, MIT license
