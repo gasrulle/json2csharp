@@ -83,10 +83,6 @@ public class Address
 - Complex union types may not convert perfectly
 - Very large JSON files may take a moment to process
 
-## Contributing
-
-Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/gasrulle/json2csharp).
-
 ## License
 
 MIT
