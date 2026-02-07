@@ -1,0 +1,149 @@
+{
+    "name": "json2csharp",
+    "displayName": "json2csharp",
+    "description": "Paste JSON as C# classes or records",
+    "version": "1.0.0",
+    "publisher": "Gasrulle",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gasrulle/json2csharp.git"
+    },
+    "icon": "resources/icon.png",
+    "engines": {
+        "vscode": "^1.96.0",
+        "node": ">=20.0.0"
+    },
+    "categories": [
+        "Other",
+        "Snippets"
+    ],
+    "keywords": [
+        "json",
+        "csharp",
+        "c#",
+        "paste",
+        "convert",
+        "class",
+        "record"
+    ],
+    "activationEvents": [],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "json2csharp.paste",
+                "title": "Paste JSON as C#"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "json2csharp.paste",
+                    "when": "resourceLangId == csharp && editorTextFocus && !editorReadonly",
+                    "group": "9_cutcopypaste"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Paste JSON as C#",
+            "properties": {
+                "json2csharp.alwaysUseRootClassName": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If checked, always uses 'Root' as the root class name without prompting"
+                },
+                "json2csharp.rootClassName": {
+                    "type": "string",
+                    "default": "Root",
+                    "description": "Default root class name when 'alwaysUseRootClassName' is enabled"
+                },
+                "json2csharp.typeStyle": {
+                    "type": "string",
+                    "enum": [
+                        "class",
+                        "recordPositional",
+                        "recordProperties"
+                    ],
+                    "enumDescriptions": [
+                        "Class with properties: public class Foo { public string Bar { get; set; } }",
+                        "Record with positional parameters: public record Foo(string Bar);",
+                        "Record with properties: public record Foo { public string Bar { get; set; } }"
+                    ],
+                    "default": "class",
+                    "description": "Type style for generated C# types"
+                },
+                "json2csharp.nullableReferenceTypes": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "nullable",
+                        "defaultValues"
+                    ],
+                    "enumDescriptions": [
+                        "No special handling for nullable reference types",
+                        "Declare properties as nullable (e.g., string?)",
+                        "Add default values (e.g., = string.Empty, = [])"
+                    ],
+                    "default": "none",
+                    "description": "How to handle reference type properties for nullable context (<Nullable>enable</Nullable>)"
+                },
+                "json2csharp.collectionType": {
+                    "type": "string",
+                    "enum": [
+                        "Array",
+                        "List",
+                        "IList",
+                        "IEnumerable",
+                        "IReadOnlyList"
+                    ],
+                    "enumDescriptions": [
+                        "T[] - Fixed size array, simple and fast",
+                        "List<T> - Most common, resizable collection",
+                        "IList<T> - Interface with indexing support",
+                        "IEnumerable<T> - Most abstract, read-only iteration",
+                        "IReadOnlyList<T> - Immutable interface with indexing"
+                    ],
+                    "default": "IEnumerable",
+                    "description": "Collection type to use for JSON arrays"
+                },
+                "json2csharp.inferEnums": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Attempt to infer enum types from JSON values"
+                },
+                "json2csharp.inferDateTimes": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Attempt to infer DateTime types from JSON string values"
+                },
+                "json2csharp.includeNamespace": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include a file-scoped namespace derived from the folder structure relative to the nearest .csproj file"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "npm run check-types && node esbuild.js",
+        "check-types": "tsc --noEmit",
+        "watch": "npm-run-all -p watch:*",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+        "package": "npm run check-types && node esbuild.js --production",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "@types/vscode": "^1.96.0",
+        "@vscode/vsce": "^3.0.0",
+        "esbuild": "^0.24.0",
+        "npm-run-all": "^4.1.5",
+        "typescript": "^5.7.0"
+    },
+    "dependencies": {
+        "quicktype-core": "^23.0.170"
+    }
+}

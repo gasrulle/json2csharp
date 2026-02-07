@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Gradient for background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e1e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d2d2d;stop-opacity:1" />
+    </linearGradient>
+    <!-- JSON yellow/orange gradient -->
+    <linearGradient id="jsonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F7DF1E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E8A500;stop-opacity:1" />
+    </linearGradient>
+    <!-- C# purple gradient -->
+    <linearGradient id="csharpGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9B4DCA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#68217A;stop-opacity:1" />
+    </linearGradient>
+    <!-- Arrow/paste teal gradient -->
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F7DF1E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9B4DCA;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full canvas background to prevent corner bleeding -->
+  <rect x="0" y="0" width="128" height="128" fill="#1e1e1e"/>
+
+  <!-- Background rounded rectangle -->
+  <rect x="0" y="0" width="128" height="128" rx="16" ry="16" fill="url(#bgGradient)"/>
+
+  <!-- JSON braces { } on the left -->
+  <g transform="translate(10, 28)">
+    <text x="18" y="50" font-family="Consolas, Monaco, monospace" font-size="42" font-weight="bold" fill="url(#jsonGradient)" text-anchor="middle">{}</text>
+  </g>
+
+  <!-- Arrow in the middle (clipboard/paste concept) -->
+  <g transform="translate(55, 54)">
+    <!-- Arrow pointing right with gradient (half size) -->
+    <path d="M0,10 L10,10 L10,5 L18,12.5 L10,20 L10,15 L0,15 Z" fill="url(#arrowGradient)" opacity="0.9"/>
+  </g>
+
+  <!-- C# symbol on the right -->
+  <g transform="translate(80, 28)">
+    <text x="18" y="50" font-family="Consolas, Monaco, monospace" font-size="36" font-weight="bold" fill="url(#csharpGradient)" text-anchor="middle">C#</text>
+  </g>
+</svg>

@@ -1,0 +1,46 @@
+# Development folders
+.vscode/**
+.vscode-test/**
+.github/**
+src/**
+out/**
+node_modules/**
+
+# Build/config files
+esbuild.js
+tsconfig.json
+package-lock.json
+.vscodeignore
+.gitignore
+.editorconfig
+
+# Source files (prevent code leak)
+**/*.ts
+!dist/**/*.js
+
+# Source maps (prevent code leak)
+**/*.map
+**/*.js.map
+
+# Documentation (except README and CHANGELOG)
+**/*.md
+!README.md
+!CHANGELOG.md
+
+# Built packages
+*.vsix
+
+# Resource source files (keep only PNG for publish)
+resources/*.svg
+
+# Test files
+**/*.test.js
+**/*.spec.js
+**/test/**
+**/tests/**
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
