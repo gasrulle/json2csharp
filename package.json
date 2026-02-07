@@ -2,7 +2,7 @@
     "name": "json2csharp",
     "displayName": "json2csharp",
     "description": "Paste JSON as C# classes or records",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "publisher": "Gasrulle",
     "license": "MIT",
     "repository": {
@@ -120,7 +120,22 @@
                 "json2csharp.includeNamespace": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Include a file-scoped namespace derived from the folder structure relative to the nearest .csproj file"
+                    "description": "Include a file-scoped namespace derived from the folder structure relative to the nearest .csproj file. Also adds required using statements when serialization attributes are enabled."
+                },
+                "json2csharp.serializationAttributes": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "SystemTextJson",
+                        "NewtonsoftJson"
+                    ],
+                    "enumDescriptions": [
+                        "No serialization attributes",
+                        "[JsonPropertyName] from System.Text.Json.Serialization",
+                        "[JsonProperty] from Newtonsoft.Json"
+                    ],
+                    "default": "SystemTextJson",
+                    "description": "Add serialization attributes to properties when the JSON key differs from the C# property name"
                 }
             }
         }
@@ -139,7 +154,7 @@
         "@types/node": "^20.11.0",
         "@types/vscode": "^1.96.0",
         "@vscode/vsce": "^3.0.0",
-        "esbuild": "^0.24.0",
+        "esbuild": "^0.27.3",
         "npm-run-all": "^4.1.5",
         "typescript": "^5.7.0"
     },

@@ -5,6 +5,17 @@ All notable changes to the "json2csharp" extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-07
+
+### Added
+
+- Serialization attributes support (System.Text.Json / Newtonsoft.Json)
+  - `[JsonPropertyName]` or `[JsonProperty]` on properties where the JSON key differs from the C# property name
+  - Positional records use `[property:]` attribute target syntax
+  - Redundant attributes are removed when JSON key matches C# name (case-insensitive)
+  - `using` statements are prepended when `includeNamespace` is also enabled
+  - New setting `json2csharp.serializationAttributes` with options: none, SystemTextJson (default), NewtonsoftJson
+
 ## [1.0.0] - 2026-02-06
 
 ### Added
