@@ -60,6 +60,7 @@ json2csharp/
 | `json2csharp.inferDateTimes` | boolean | true | Infer DateTime types from strings |
 | `json2csharp.includeNamespace` | boolean | false | Include file-scoped namespace from .csproj and folder structure |
 | `json2csharp.serializationAttributes` | enum | "SystemTextJson" | Serialization attributes: none, SystemTextJson ([JsonPropertyName]), NewtonsoftJson ([JsonProperty]) |
+| `json2csharp.attributeRendering` | enum | "whenDifferent" | When to render attributes: whenDifferent (only when JSON key differs) or always. Only applies when serializationAttributes is SystemTextJson or NewtonsoftJson |
 
 ## Key Implementation Details
 
@@ -76,7 +77,7 @@ The quicktype-core library (~1.6 MB) is lazy-loaded on first command invocation:
 - Extension activation is instant, heavy code loads only when needed
 
 ### Post-Processing Steps
-1. Remove redundant serialization attributes (where JSON key matches C# name)
+1. Remove redundant serialization attributes (where JSON key matches C# name) — skipped when `attributeRendering` is `always`
 2. Convert collection types (`List<T>` → user's chosen type)
 3. Remove `partial` keyword from class declarations
 4. Add nullable annotations or default values (if configured)
@@ -159,7 +160,13 @@ npx @vscode/vsce package    # Creates .vsix file
 
 ## Changelog
 
-### v1.1.0 (Current)
+### v1.2.0 (Current)
+- Attribute rendering mode (`attributeRendering` setting)
+  - `whenDifferent` (default): Only add serialization attributes when JSON key differs from C# property name (existing behavior)
+  - `always`: Always add serialization attributes on every property, even when names match
+  - Only applies when `serializationAttributes` is set to SystemTextJson or NewtonsoftJson
+
+### v1.1.0
 - Serialization attributes support (System.Text.Json / Newtonsoft.Json)
   - `[JsonPropertyName]` or `[JsonProperty]` on properties where JSON key differs from C# name
   - Positional records use `[property:]` attribute target

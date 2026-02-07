@@ -158,7 +158,8 @@ export async function convertJsonToCSharp(
     config: vscode.WorkspaceConfiguration,
     nullableStyle?: NullableStyle,
     namespace?: string,
-    serializationAttributes?: SerializationAttributes
+    serializationAttributes?: SerializationAttributes,
+    alwaysRenderAttributes: boolean = false
 ): Promise<string> {
     const options = getConverterOptions(config);
 
@@ -212,7 +213,7 @@ export async function convertJsonToCSharp(
     let output = result.lines.join('\n');
 
     // Post-process: Remove redundant serialization attributes where JSON key matches C# name
-    if (serializationAttributes) {
+    if (serializationAttributes && !alwaysRenderAttributes) {
         output = removeRedundantAttributes(output);
     }
 

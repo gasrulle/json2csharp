@@ -75,6 +75,7 @@ public class Address
 | `json2csharp.inferDateTimes` | `true` | Attempt to infer DateTime types from strings |
 | `json2csharp.includeNamespace` | `false` | Include file-scoped namespace from .csproj structure. Also adds required using statements when serialization attributes are enabled |
 | `json2csharp.serializationAttributes` | `"SystemTextJson"` | Serialization attributes: none, SystemTextJson, or NewtonsoftJson |
+| `json2csharp.attributeRendering` | `"whenDifferent"` | When to render attributes: whenDifferent or always. Only applies when serializationAttributes is SystemTextJson or NewtonsoftJson |
 
 ## Requirements
 
