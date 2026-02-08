@@ -2,7 +2,7 @@
     "name": "json2csharp",
     "displayName": "json2csharp",
     "description": "Paste JSON as C# classes or records",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "publisher": "Gasrulle",
     "license": "MIT",
     "repository": {
@@ -34,14 +34,53 @@
             {
                 "command": "json2csharp.paste",
                 "title": "Paste JSON as C#"
+            },
+            {
+                "command": "json2csharp.pasteClassesOnly",
+                "title": "Classes Only"
+            },
+            {
+                "command": "json2csharp.pasteWithNamespace",
+                "title": "With Namespace & Usings"
+            }
+        ],
+        "submenus": [
+            {
+                "id": "json2csharp.submenu",
+                "label": "Paste JSON as C#"
             }
         ],
         "menus": {
             "editor/context": [
                 {
                     "command": "json2csharp.paste",
-                    "when": "resourceLangId == csharp && editorTextFocus && !editorReadonly",
+                    "when": "resourceLangId == csharp && editorTextFocus && !editorReadonly && config.json2csharp.namespaceMode != 'choose'",
                     "group": "9_cutcopypaste"
+                },
+                {
+                    "submenu": "json2csharp.submenu",
+                    "when": "resourceLangId == csharp && editorTextFocus && !editorReadonly && config.json2csharp.namespaceMode == 'choose'",
+                    "group": "9_cutcopypaste"
+                }
+            ],
+            "json2csharp.submenu": [
+                {
+                    "command": "json2csharp.pasteClassesOnly",
+                    "group": "1_main@1"
+                },
+                {
+                    "command": "json2csharp.pasteWithNamespace",
+                    "group": "1_main@2"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "json2csharp.pasteClassesOnly",
+                    "when": "false"
+                },
+                {
+                    "command": "json2csharp.pasteWithNamespace",
+                    "when": "false"
                 }
             ]
         },
@@ -117,10 +156,20 @@
                     "default": true,
                     "description": "Attempt to infer DateTime types from JSON string values"
                 },
-                "json2csharp.includeNamespace": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Include a file-scoped namespace derived from the folder structure relative to the nearest .csproj file. Also adds required using statements when serialization attributes are enabled."
+                "json2csharp.namespaceMode": {
+                    "type": "string",
+                    "enum": [
+                        "withoutNamespace",
+                        "withNamespace",
+                        "choose"
+                    ],
+                    "enumDescriptions": [
+                        "Never include namespace or usings",
+                        "Always include file-scoped namespace and required usings",
+                        "Show a submenu with both options in the context menu"
+                    ],
+                    "default": "withoutNamespace",
+                    "description": "Controls namespace inclusion. 'withoutNamespace' and 'withNamespace' show a single context menu item. 'choose' shows a submenu with both options."
                 },
                 "json2csharp.serializationAttributes": {
                     "type": "string",

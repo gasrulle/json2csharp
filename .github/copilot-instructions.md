@@ -14,7 +14,7 @@ json2csharp/
 │   ├── launch.json      # Debug configurations (Run Extension, Extension Tests)
 │   └── tasks.json       # Build tasks (watch, compile, Package VSIX)
 ├── src/
-│   ├── extension.ts     # Entry point, command registration, user prompts
+│   ├── extension.ts     # Entry point, 3 command registrations, shared pasteJsonAsCSharp() helper
 │   ├── converter.ts     # JSON to C# conversion using quicktype-core (lazy-loaded)
 │   ├── validator.ts     # JSON validation with user-friendly errors
 │   └── namespace.ts     # Namespace detection from .csproj and folder structure
@@ -48,6 +48,7 @@ json2csharp/
 - [x] Optional file-scoped namespace from .csproj and folder structure
 - [x] Serialization attributes (System.Text.Json or Newtonsoft.Json) when JSON keys differ from C# names
 - [x] Root class name selected as linked snippet placeholder after paste (for instant rename)
+- [x] Namespace mode with submenu: `choose` mode shows submenu with "Classes Only" / "With Namespace & Usings"
 
 ### Configuration Options
 | Setting | Type | Default | Description |
@@ -59,7 +60,7 @@ json2csharp/
 | `json2csharp.nullableReferenceTypes` | enum | "none" | Handle nullable context: none, nullable (?), or defaultValues (= string.Empty, = []) |
 | `json2csharp.inferEnums` | boolean | false | Infer enum types from values |
 | `json2csharp.inferDateTimes` | boolean | true | Infer DateTime types from strings |
-| `json2csharp.includeNamespace` | boolean | false | Include file-scoped namespace from .csproj and folder structure |
+| `json2csharp.namespaceMode` | enum | "withoutNamespace" | Namespace inclusion: withoutNamespace, withNamespace (single menu item), or choose (submenu with both options) |
 | `json2csharp.serializationAttributes` | enum | "SystemTextJson" | Serialization attributes: none, SystemTextJson ([JsonPropertyName]), NewtonsoftJson ([JsonProperty]) |
 | `json2csharp.attributeRendering` | enum | "whenDifferent" | When to render attributes: whenDifferent (only when JSON key differs) or always. Only applies when serializationAttributes is SystemTextJson or NewtonsoftJson |
 
@@ -83,12 +84,32 @@ The quicktype-core library (~1.6 MB) is lazy-loaded on first command invocation:
 3. Remove `partial` keyword from class declarations
 4. Add nullable annotations or default values (if configured)
 5. Convert classes to records (if configured)
-6. Prepend using statement for serialization framework (if attributes + namespace enabled)
-7. Prepend file-scoped namespace (if enabled and valid)
+6. Prepend file-scoped namespace (if enabled and valid)
+7. Collect and prepend required `using` statements (sorted alphabetically) when namespace is included:
+   - `using System.Collections.Generic;` — if collection type is not Array **and** the output contains collections
+   - `using System.Text.Json.Serialization;` or `using Newtonsoft.Json;` — if serialization attributes are enabled
+
+### Namespace Mode & Context Menu
+The `namespaceMode` setting controls both behavior and context menu appearance:
+- **`withoutNamespace`** (default): Single "Paste JSON as C#" menu item, never includes namespace
+- **`withNamespace`**: Single "Paste JSON as C#" menu item, always includes namespace and usings
+- **`choose`**: Shows a submenu "Paste JSON as C#" → "Classes Only" / "With Namespace & Usings"
+
+Conditional menu visibility uses VS Code's `config.*` when-clause support:
+- `config.json2csharp.namespaceMode != 'choose'` → show single command
+- `config.json2csharp.namespaceMode == 'choose'` → show submenu
+
+The submenu is defined via `contributes.submenus` with child items in `contributes.menus["json2csharp.submenu"]`.
+Submenu commands (`pasteClassesOnly`, `pasteWithNamespace`) are hidden from the Command Palette via `commandPalette` when clauses.
+
+**Migration**: The `resolveNamespaceMode()` function handles old boolean `includeNamespace` settings gracefully — `true` maps to `withNamespace`, `false` maps to `withoutNamespace`.
 
 ### Collection Type Conversion
 - quicktype generates `T[]` (array-type: 'array') or `List<T>` (array-type: 'list')
 - Post-processing converts `List<T>` to the user's chosen type via regex replacement
+- When namespace is included and the output contains generic collections, `using System.Collections.Generic;` is prepended
+- `Array` (`T[]`) is built-in and never requires a `using` statement
+- The `using` is only added when the type actually appears in the output (no unnecessary imports)
 
 ### Nullable Reference Types
 Two strategies for `<Nullable>enable</Nullable>` compatibility:
@@ -105,13 +126,13 @@ When `serializationAttributes` is set to `SystemTextJson` or `NewtonsoftJson`:
 - quicktype is invoked with `features: 'attributes-only'` and the corresponding `framework` option (`SystemTextJson` or `NewtonSoft`)
 - A post-processing step removes attributes where the JSON key matches the C# property name (case-insensitive comparison)
 - For positional records, attributes use `[property:]` target syntax: `[property: JsonPropertyName("key")]`
-- `using` statements are only prepended when `includeNamespace` is also enabled
+- `using` statements are only prepended when namespace is included in the output
 
 ### Root Name Snippet Selection
 When the user accepts the default root class name (or `alwaysUseRootClassName` is enabled), the extension inserts via `editor.insertSnippet()` with linked placeholders (`${1:RootName}`) so all occurrences of the root name are selected and editable simultaneously. When the user types a custom name in the input box, plain `editor.edit(insert)` is used instead (no placeholder). The C# output is escaped for snippet syntax (`}` → `\}`, `$` → `\$`, `\` → `\\`) before root name occurrences are replaced using a `\b`-bounded regex to avoid false matches in derived identifiers like `RootElement`.
 
 ### Namespace Detection (matches VS Code C# extension behavior)
-When `includeNamespace` is enabled, the extension:
+When namespace inclusion is active (via `withNamespace` mode or "With Namespace & Usings" submenu choice), the extension:
 1. **Finds nearest .csproj** - Walks up parent directories from the current file
 2. **Extracts root namespace** - From `<RootNamespace>` element, or falls back to project filename
 3. **Calculates path segments** - Relative path from .csproj directory to file's parent directory
@@ -164,7 +185,21 @@ npx @vscode/vsce package    # Creates .vsix file
 
 ## Changelog
 
-### v1.3.0 (Current)
+### v1.4.0 (Current)
+- `using System.Collections.Generic;` automatically prepended when namespace is included and the output contains generic collection types (List, IList, IEnumerable, IReadOnlyList)
+  - Only added when collections actually appear in the output
+  - Arrays (`T[]`) don't require a using statement
+  - All using statements are sorted alphabetically
+- Replaced `includeNamespace` boolean setting with `namespaceMode` enum (`withoutNamespace`, `withNamespace`, `choose`)
+  - `withoutNamespace` / `withNamespace`: Single context menu item with deterministic behavior
+  - `choose`: Submenu "Paste JSON as C#" → "Classes Only" / "With Namespace & Usings"
+- Added `contributes.submenus` for the expandable context menu
+- Three commands registered: `json2csharp.paste`, `json2csharp.pasteClassesOnly`, `json2csharp.pasteWithNamespace`
+- Submenu commands hidden from Command Palette
+- Graceful migration from old boolean `includeNamespace` setting
+- Extracted shared `pasteJsonAsCSharp()` helper function in extension.ts
+
+### v1.3.0
 - Root class name selected as linked snippet placeholder after paste
   - All occurrences of the root name are highlighted and editable simultaneously
   - User can immediately type to rename, then press Tab/Escape to confirm

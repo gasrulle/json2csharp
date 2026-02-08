@@ -244,12 +244,26 @@ export async function convertJsonToCSharp(
         output = `namespace ${namespace};\n\n${output}`;
     }
 
-    // Post-process: Prepend using statement if serialization attributes are present and namespace is included
-    if (serializationAttributes && namespace) {
-        const usingStatement = serializationAttributes === 'SystemTextJson'
-            ? 'using System.Text.Json.Serialization;'
-            : 'using Newtonsoft.Json;';
-        output = `${usingStatement}\n\n${output}`;
+    // Post-process: Collect and prepend required using statements when namespace is included
+    if (namespace) {
+        const usings: string[] = [];
+
+        // Collection types (all except Array) require System.Collections.Generic
+        if (options.collectionType !== 'Array' && output.includes(`${options.collectionType}<`)) {
+            usings.push('using System.Collections.Generic;');
+        }
+
+        // Serialization attributes require their respective namespace
+        if (serializationAttributes) {
+            usings.push(serializationAttributes === 'SystemTextJson'
+                ? 'using System.Text.Json.Serialization;'
+                : 'using Newtonsoft.Json;');
+        }
+
+        if (usings.length > 0) {
+            usings.sort();
+            output = `${usings.join('\n')}\n\n${output}`;
+        }
     }
 
     return output.trim();

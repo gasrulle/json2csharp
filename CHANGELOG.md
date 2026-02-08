@@ -5,6 +5,26 @@ All notable changes to the "json2csharp" extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-08
+
+### Added
+
+- `using System.Collections.Generic;` is automatically prepended when namespace is included and the output contains generic collection types (List, IList, IEnumerable, IReadOnlyList)
+  - Only added when collections actually appear in the output
+  - Arrays (`T[]`) don't require a using statement
+  - All using statements (collections + serialization) are sorted alphabetically
+
+### Changed
+
+- Replaced `includeNamespace` boolean setting with `namespaceMode` enum
+  - `withoutNamespace` (default): Single context menu item, never includes namespace
+  - `withNamespace`: Single context menu item, always includes namespace and usings
+  - `choose`: Submenu "Paste JSON as C#" → "Classes Only" / "With Namespace & Usings"
+- Extracted shared `pasteJsonAsCSharp()` helper function in extension.ts
+- Three commands registered: `json2csharp.paste`, `json2csharp.pasteClassesOnly`, `json2csharp.pasteWithNamespace`
+- Submenu commands hidden from Command Palette
+- Graceful migration: old boolean `includeNamespace` values (`true`/`false`) are mapped automatically
+
 ## [1.3.0] - 2026-02-08
 
 ### Added
