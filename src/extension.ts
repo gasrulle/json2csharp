@@ -3,6 +3,16 @@ import { convertJsonToCSharp, NullableStyle, SerializationAttributes } from './c
 import { calculateNamespace } from './namespace';
 import { validateJson } from './validator';
 
+function escapeForSnippet(text: string): string {
+    return text.replace(/\\/g, '\\\\').replace(/\$/g, '\\$').replace(/}/g, '\\}');
+}
+
+function buildSnippetText(csharpCode: string, rootClassName: string): string {
+    const escaped = escapeForSnippet(csharpCode);
+    const pattern = new RegExp(`\\b${rootClassName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+    return escaped.replace(pattern, `\${1:${rootClassName}}`);
+}
+
 export function activate(context: vscode.ExtensionContext) {
     const disposable = vscode.commands.registerCommand('json2csharp.paste', async () => {
         const editor = vscode.window.activeTextEditor;
@@ -32,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Determine root class name
         let rootClassName: string;
+        let userChoseCustomName = false;
         if (alwaysUseRootClassName) {
             rootClassName = defaultRootClassName;
         } else {
@@ -53,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return; // User cancelled
             }
             rootClassName = userInput;
+            userChoseCustomName = userInput !== defaultRootClassName;
         }
 
         // Get nullable style from settings
@@ -79,9 +91,14 @@ export function activate(context: vscode.ExtensionContext) {
             const csharpCode = await convertJsonToCSharp(clipboardText, rootClassName, config, nullableStyle, namespace, serializationAttributes, alwaysRenderAttributes);
 
             // Insert at cursor position
-            await editor.edit((editBuilder) => {
-                editBuilder.insert(editor.selection.active, csharpCode);
-            });
+            if (userChoseCustomName) {
+                await editor.edit((editBuilder) => {
+                    editBuilder.insert(editor.selection.active, csharpCode);
+                });
+            } else {
+                const snippetText = buildSnippetText(csharpCode, rootClassName);
+                await editor.insertSnippet(new vscode.SnippetString(snippetText), editor.selection.active);
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

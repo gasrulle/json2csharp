@@ -5,6 +5,16 @@ All notable changes to the "json2csharp" extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-08
+
+### Added
+
+- Root class name is selected as a linked snippet placeholder after paste
+  - All occurrences of the root name are highlighted and editable simultaneously
+  - User can immediately type to rename, then press Tab/Escape to confirm
+  - Only activates when the default root name is used (not when user typed a custom name)
+  - Uses word-boundary matching to avoid replacing derived names like `RootElement`
+
 ## [1.2.0] - 2026-02-07
 
 ### Added

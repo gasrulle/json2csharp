@@ -47,6 +47,7 @@ json2csharp/
 - [x] Clean output (no using statements, no partial keyword - just class definitions)
 - [x] Optional file-scoped namespace from .csproj and folder structure
 - [x] Serialization attributes (System.Text.Json or Newtonsoft.Json) when JSON keys differ from C# names
+- [x] Root class name selected as linked snippet placeholder after paste (for instant rename)
 
 ### Configuration Options
 | Setting | Type | Default | Description |
@@ -106,6 +107,9 @@ When `serializationAttributes` is set to `SystemTextJson` or `NewtonsoftJson`:
 - For positional records, attributes use `[property:]` target syntax: `[property: JsonPropertyName("key")]`
 - `using` statements are only prepended when `includeNamespace` is also enabled
 
+### Root Name Snippet Selection
+When the user accepts the default root class name (or `alwaysUseRootClassName` is enabled), the extension inserts via `editor.insertSnippet()` with linked placeholders (`${1:RootName}`) so all occurrences of the root name are selected and editable simultaneously. When the user types a custom name in the input box, plain `editor.edit(insert)` is used instead (no placeholder). The C# output is escaped for snippet syntax (`}` → `\}`, `$` → `\$`, `\` → `\\`) before root name occurrences are replaced using a `\b`-bounded regex to avoid false matches in derived identifiers like `RootElement`.
+
 ### Namespace Detection (matches VS Code C# extension behavior)
 When `includeNamespace` is enabled, the extension:
 1. **Finds nearest .csproj** - Walks up parent directories from the current file
@@ -160,7 +164,14 @@ npx @vscode/vsce package    # Creates .vsix file
 
 ## Changelog
 
-### v1.2.0 (Current)
+### v1.3.0 (Current)
+- Root class name selected as linked snippet placeholder after paste
+  - All occurrences of the root name are highlighted and editable simultaneously
+  - User can immediately type to rename, then press Tab/Escape to confirm
+  - Only activates when the default root name is used (not when user typed a custom name)
+  - Uses `\b` word-boundary regex to avoid replacing derived names like `RootElement`
+
+### v1.2.0
 - Attribute rendering mode (`attributeRendering` setting)
   - `whenDifferent` (default): Only add serialization attributes when JSON key differs from C# property name (existing behavior)
   - `always`: Always add serialization attributes on every property, even when names match

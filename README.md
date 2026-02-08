@@ -19,6 +19,7 @@ Perfect for quickly converting JSON from REST API documentation into C# request/
 - **Nullable Support**: Handle nullable reference types with annotations or default values
 - **Namespace Detection**: Optionally include file-scoped namespace from .csproj structure
 - **Serialization Attributes**: Optionally add `[JsonPropertyName]` (System.Text.Json) or `[JsonProperty]` (Newtonsoft.Json) when JSON keys differ from C# names
+- **Instant Rename**: Root class name is selected as a linked placeholder after paste — just start typing to rename all occurrences at once
 
 ## Usage
 
@@ -27,6 +28,7 @@ Perfect for quickly converting JSON from REST API documentation into C# request/
 3. Right-click where you want to insert the code
 4. Select **"Paste JSON as C#"**
 5. Enter a root class name (or use the default)
+6. If you kept the default name, it's highlighted — just type to rename all occurrences instantly
 
 ### Example
 
