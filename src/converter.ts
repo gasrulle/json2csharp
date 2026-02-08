@@ -253,11 +253,11 @@ export async function convertJsonToCSharp(
             usings.push('using System.Collections.Generic;');
         }
 
-        // Serialization attributes require their respective namespace
-        if (serializationAttributes) {
-            usings.push(serializationAttributes === 'SystemTextJson'
-                ? 'using System.Text.Json.Serialization;'
-                : 'using Newtonsoft.Json;');
+        // Serialization attributes require their respective namespace (only if attributes are actually present in output)
+        if (serializationAttributes === 'SystemTextJson' && /\[(?:property: )?JsonPropertyName\(/.test(output)) {
+            usings.push('using System.Text.Json.Serialization;');
+        } else if (serializationAttributes === 'NewtonsoftJson' && /\[(?:property: )?JsonProperty\(/.test(output)) {
+            usings.push('using Newtonsoft.Json;');
         }
 
         if (usings.length > 0) {

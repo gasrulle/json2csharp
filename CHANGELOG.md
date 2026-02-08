@@ -5,6 +5,12 @@ All notable changes to the "json2csharp" extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-02-08
+
+### Fixed
+
+- Serialization `using` directives (`System.Text.Json.Serialization` / `Newtonsoft.Json`) are no longer added when no serialization attributes are present in the output (e.g., when `attributeRendering` is `whenDifferent` and all JSON keys match C# property names)
+
 ## [1.4.0] - 2026-02-08
 
 ### Added

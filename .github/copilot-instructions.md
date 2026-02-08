@@ -185,7 +185,10 @@ npx @vscode/vsce package    # Creates .vsix file
 
 ## Changelog
 
-### v1.4.0 (Current)
+### v1.4.1 (Current)
+- **Bugfix**: Serialization `using` directives (`System.Text.Json.Serialization` / `Newtonsoft.Json`) are now only added when serialization attributes actually appear in the output, preventing unnecessary usings when `attributeRendering` is `whenDifferent` and all JSON keys match C# property names
+
+### v1.4.0
 - `using System.Collections.Generic;` automatically prepended when namespace is included and the output contains generic collection types (List, IList, IEnumerable, IReadOnlyList)
   - Only added when collections actually appear in the output
   - Arrays (`T[]`) don't require a using statement
