@@ -50,7 +50,7 @@
             "properties": {
                 "json2csharp.alwaysUseRootClassName": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "If checked, always uses 'Root' as the root class name without prompting"
                 },
                 "json2csharp.rootClassName": {
