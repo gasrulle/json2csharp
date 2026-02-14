@@ -2,7 +2,7 @@
     "name": "json2csharp",
     "displayName": "json2csharp",
     "description": "Paste JSON as C# classes or records",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "publisher": "Gasrulle",
     "license": "MIT",
     "repository": {
